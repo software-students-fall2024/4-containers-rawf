@@ -6,14 +6,14 @@ app = Flask(__name__)
 # Define a route for the homepage
 @app.route('/')
 def home():
-    return jsonify(message="Hello, Flask is running in Docker!")
+    return jsonify(message="Flask is currently running in Docker!")
 
 # Define another sample route
 @app.route('/data')
 def data():
     sample_data = {
         "name": "Dockerized Flask App",
-        "description": "This is a Flask app running inside Docker."
+        "description": "This is a  Flask app running inside Docker."
     }
     return jsonify(sample_data)
 
