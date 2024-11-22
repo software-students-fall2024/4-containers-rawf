@@ -1,22 +1,6 @@
 let sections = document.querySelectorAll("section");
 let header = document.querySelectorAll("header");
 
-window.onscroll = () => {
-    selections.forEeach(sec => {
-        let top = window.scrollY;
-        let offset = sec.offsetTop - 150;
-        let height = sec.offsetHeight;
-        let id = sec.getAttribute("id");
-
-        if (top >= offset && top < offset + height) {
-            navLinks.forEach(links => {
-                links.classList.remove("active");
-                document.querySelector("header[href*=" + id + " ]").classList.add("active");
-            })
-        }
-    })
-}
-
 // REPLAY BUTTON
 document.addEventListener("DOMContentLoaded", () => {
     const replayButton = document.getElementById("replayButton");
@@ -29,43 +13,111 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// RESET GAME
-function resetGame() {
-    // CODE TO RESET GAME: CLEARING SCORES, RESETTING UI, ETC...
-    console.log("Game reset");
-}
-
-// COUNTDOWN FLASHES
-document.addEventListener('DOMContentLoaded', () => {
+// GAME PLAYTHROUGH (CAMERA BOX, COUNTDOWN, CURRENT STATS)
+document.addEventListener("DOMContentLoaded", () => {
     // Define variables
-    const yesButton = document.getElementById('yes-button');
-    const countdown = document.getElementById('countdown');
-    const choices = document.getElementById('choices');
-    let hasPlayedOnce = false;          // Track if "Yes" button has been clicked
-    let index = 0;
-    const words = ["Get ready!", "Rock", "Paper", "Scissors", "Shoot!"];
-    choices.style.display = 'none';     // Hide choices initially
+    const cameraBox = document.getElementById("camera-box");
+    const countdownDisplay = document.getElementById("countdown");
+    const yesButton = document.getElementById("yes-button");
+    const videoElement = document.createElement("video");
+    let cameraInitialized = false;
 
-    // startCountdown() function: begins game countdown if user agrees
-    function startCountdown() {
-        countdown.textContent = words[index];
+    const choicesDisplay = document.createElement("div");
+    choicesDisplay.setAttribute("id", "choices");
+    choicesDisplay.style.display = "none";
+    cameraBox.after(choicesDisplay);
+
+    videoElement.setAttribute("autoplay", true);
+    videoElement.setAttribute("playsinline", true);
+    videoElement.setAttribute("muted", true);
+
+    // Start camera
+    function startCamera() {
+        navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then((stream) => {
+                videoElement.srcObject = stream;
+                cameraBox.innerHTML = "";            // Placeholder
+                cameraBox.appendChild(videoElement);
+                cameraInitialized = true;
+                startGameCountdown();
+            })
+            .catch((err) => {
+                console.error("Error accessing the camera:", err);
+                cameraBox.innerHTML = "Unable to access the camera. Playing with random moves.";
+                cameraInitialized = false;
+                startGameCountdown();
+            });
+    }
+
+    // Start game timer
+    function startGameCountdown() {
+        const countdownTexts = ["Rock...", "Paper...", "Scissors...", "Shoot!"];
+        let index = 0;
+
+        countdownDisplay.style.display = "block";
+        choicesDisplay.style.display = "none";
+
         const interval = setInterval(() => {
+            countdownDisplay.innerText = countdownTexts[index];
             index++;
-            if (index < words.length) {countdown.textContent = words[index];} 
-            else {
+
+            if (index === countdownTexts.length) {
                 clearInterval(interval);
-                choices.style.display = 'block';       // Show choices after countdown
-                yesButton.textContent = "Play again!"; // Change yes-button after click
-                index = 0;                             // Reset index for next game
+                generateRandomMove();
             }
         }, 1000);
     }
 
-    // startCountdown() on Yes button click
-    yesButton.addEventListener('click', () => {
-        choices.style.display = 'none'; // Hide choices at the start
-        startCountdown();               // Begin countdown
+    // Generate random move and display results
+    function generateRandomMove() {
+        const moves = ["Rock", "Paper", "Scissors"];
+        const userChoice = moves[Math.floor(Math.random() * moves.length)];
+        const computerChoice = moves[Math.floor(Math.random() * moves.length)];
+        const winner = determineWinner(userChoice, computerChoice);
+        displayResults(userChoice, computerChoice, winner);
+    }
 
-        if (!hasPlayedOnce) {hasPlayedOnce = true;} // True after first click
+    // Determine winner
+    function determineWinner(userChoice, computerChoice) {
+        if (userChoice === computerChoice) {return "Nobody";} // Tie
+
+        // User wins
+        else if (
+            (userChoice === "Rock" && computerChoice === "Scissors") ||
+            (userChoice === "Paper" && computerChoice === "Rock") ||
+            (userChoice === "Scissors" && computerChoice === "Paper"))
+            {return "User";}
+
+        else {return "Computer";} // Computer wins
+    }
+
+    // Display results
+    function displayResults(userChoice, computerChoice, winner) {
+        countdownDisplay.style.display = "none"; // Hide countdown
+        choicesDisplay.style.display = "block";  // Show results
+
+        // Determine >, <, =
+        let comparisonLine = "";
+        if (winner === "User") {
+            comparisonLine = `<strong>${userChoice}</strong> > ${computerChoice}`;
+        } else if (winner === "Computer") {
+            comparisonLine = `${userChoice} < <strong>${computerChoice}</strong>`;
+        } else {
+            comparisonLine = `${userChoice} <strong>=</strong> ${computerChoice}`;
+        }
+
+        // Print results
+        choicesDisplay.innerHTML = `
+            <p>You chose <strong>${userChoice}</strong> & Computer chose <strong>${computerChoice}</strong>.</p>
+            <p>${comparisonLine}</p>
+            <p><strong>${winner}</strong> wins!</p>
+        `;
+    }
+
+    // IFF game played once...
+    yesButton.addEventListener("click", () => {
+        startCamera();
+        yesButton.textContent = "Play again!";
     });
 });
