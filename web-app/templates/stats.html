@@ -6,26 +6,20 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Rock, Paper, Scissors</title>
-
-        <!-- Link to the CSS file for styling -->
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <!-- Link to external icon library -->
         <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     </head>
 
     <body>
         <!-- HEADER SECTION -->
         <header>
-            <!-- Modification: Link to the home page dynamically -->
             <a href="{{ url_for('home') }}" class="webName">
                 <img src="{{ url_for('static', filename='logo.png') }}" id="logo">Rock, Paper, Scissors
             </a>
 
             <!-- Buttons -->
             <div class="button-container">
-                <!-- Modification: Link to start a new game dynamically -->
                 <div class="replay-button"><a href="{{ url_for('home') }}">New Game</a></div>
-                <!-- Modification: Link to the stats page dynamically -->
                 <div class="stats-button"><a href="{{ url_for('stats') }}">Stats</a></div>
             </div>
         </header>
@@ -33,20 +27,24 @@
         <!-- STATS PAGE SECTION -->
         <section class="stats" id="stats">
             <h2>Game Statistics:</h2>
-
-            <!-- Dynamic data: Fetch and display statistics -->
-            <ul>
-                {% for stat in stats %}
-                <li>
-                    <strong>Player:</strong> {{ stat.player }} | 
-                    <strong>Wins:</strong> {{ stat.wins }} | 
-                    <strong>Losses:</strong> {{ stat.losses }}
-                </li>
-                {% endfor %}
-            </ul>
-        </section>
-
-        <!-- Link to the JavaScript file dynamically -->
+            
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>User Wins</th>
+                        <th>Ties</th>
+                        <th>Computer Wins</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="user-wins">0</td>
+                        <td id="ties">0</td>
+                        <td id="computer-wins">0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>        
         <script src="{{ url_for('static', filename='script.js') }}"></script>
     </body>
 </html>

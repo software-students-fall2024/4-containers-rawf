@@ -249,6 +249,15 @@ header {
     align-items: center;
     font-size: 2rem;
     color: var(--text-color);  
+    overflow: hidden;             /* No overflow */
+    position: relative;           /* Layers video properly */
+}
+#camera-box video {
+    width: 100%;        /* Ensure video fills box */
+    height: 100%;       /* Maintain ratio of video */
+    object-fit: cover;  /* Ensures video fits perfectly */
+    position: absolute; /* Layer video inside box */
+    z-index: 1;         /* Ensures video appears above background */
 }
 #choices {
     font-size: 2.75rem;
@@ -258,11 +267,32 @@ header {
 }
 
 
+
 /* ----------STATS PAGE---------- */
 .stats h2 {
     padding: 5rem 4rem;
     font-size: 4rem;
     margin-top: 8rem;
+    margin-bottom: -2rem;
     text-align: center;
     color: black;
 }
+.stats-table {
+    width: 50%;
+    margin: 3rem auto;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 2.5rem;
+    color: black;
+}
+.stats-table thead {
+    background-color: var(--icon-color);
+    color: black;
+}
+.stats-table th,
+.stats-table td {
+    padding: 1rem;
+    border: 1px solid #1b0686;
+}
+.stats-table tbody td {background-color: #f4f4f4;}
+.stats-table tbody tr:nth-child(even) td {background-color: #e9e9e9;}

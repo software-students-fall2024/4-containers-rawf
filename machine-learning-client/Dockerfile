@@ -1,22 +1,15 @@
-FROM python:3.12-slim
+# Use Python 3.9 as base image
+FROM python:3.9-slim
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Install pipenv
-RUN pip install pipenv
+# Copy requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy Pipfile and Pipfile.lock first to leverage caching
-COPY Pipfile Pipfile.lock ./
-
-# Install dependencies using pipenv
-RUN pipenv install --system --deploy
-
-# Copy the rest of the application code
+# Copy all project files into container
 COPY . .
 
-# Expose the necessary port
-EXPOSE 5001
-
-# Run the application
-CMD ["python", "ml_client.py"]
+# Run app
+CMD ["python", "app.py"]

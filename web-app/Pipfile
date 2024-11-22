@@ -9,9 +9,12 @@ name = "pypi"
 flask_cors = "==3.0.10"
 flask = "*"
 flask-cors = "*"
-pymongo = "*"
 python-dotenv = "*"
 requests = "*"
+numpy = "*"
+opencv-python = "*"
+pymongo = "*"
+cvzone = "*"
 
 [dev-packages]
 pytest-flask = "*"  # Flask-specific pytest extension

@@ -44,12 +44,7 @@ cd <4-containers-rawf>
 - *Download MongoDB:* download this extension onto your chosen source code editor
 - *Connect to Database URL:* mongodb://mongodb:27017/
 
-**3. Go to Correct Filepath:**
-```
-cd Desktop/4-containers-rawf-main/web-app
-```
-
-**4. Create a Virtual Environment:**
+**3. Create a Virtual Environment:**
 - *Mac:*
    ```
    python3 -m venv .venv
@@ -62,13 +57,13 @@ cd Desktop/4-containers-rawf-main/web-app
    .venv\Scripts\activate
    ```
 
-**5. Install Dependencies:**
+**4. Install Dependencies:**
 ```
 pip install requests
 pip install pymongo
 ```
 
-**6. Integrate with Docker Compose:** 
+**5. Integrate with Docker Compose:** 
 ```
 docker-compose up --build
 ```

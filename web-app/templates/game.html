@@ -11,9 +11,8 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
         <!-- Link to external icon library -->
         <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-
     </head>
-   
+
     <body>
         <!-- HEADER SECTION -->
         <header>
@@ -21,8 +20,8 @@
             <a href="{{ url_for('home') }}" class="webName">
                 <img src="{{ url_for('static', filename='logo.png') }}" id="logo">Rock, Paper, Scissors
             </a>
-             <!-- Buttons container -->
-             <div class="button-container">
+            <!-- Buttons container -->
+            <div class="button-container">
                 <!-- Link to start a new game -->
                 <div class="replay-button"><a href="{{ url_for('home') }}">New Game</a></div>
                 <!-- Link to view game statistics -->
@@ -41,15 +40,8 @@
             </div>
 
             <!-- Camera box -->
-            <div id="camera-box"></div> <!-- Add in later with back-end -->
-
-            <!-- Display choices -->
-            <div id="choices">
-                <p>You chose <i>[]</i> and computer chose <i>[]</i></p>
-                <p>[] > []</p>
-                <p>[] wins!</p>
-            </div>
+            <div id="camera-box"></div>         
         </section>
-        <script src="../static/script.js"></script>
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
     </body>
 </html>

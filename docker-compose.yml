@@ -7,46 +7,47 @@ services:
       dockerfile: Dockerfile
     container_name: web_app
     ports:
-      - "5888:5000"  # Map container port 5000 to host port 5888
+      - "5888:5000" # Map container port 5000 to host port 5888
     environment:
       - FLASK_ENV=development
       - DATABASE_URL=mongodb://mongodb:27017
       - UPLOAD_FOLDER=/uploads
     volumes:
-      - ./uploads:/uploads  # Bind uploads folder for persistence
+      - ./web-app:/app
+      - ./uploads:/uploads  # Bind uploads folder for persistence
     depends_on:
-      - mongodb
-    networks:
-      - app_network
+      - mongodb
+    networks:
+      - app_network
 
   ml-client:
     build:
       context: ./machine-learning-client
-      dockerfile: Dockerfile
-    container_name: machine_learning_client
-    environment:
+      dockerfile: Dockerfile
+    container_name: machine_learning_client
+    environment:
       - DATABASE_URL=mongodb://mongodb:27017
-    depends_on:
-      - mongodb
-    volumes:
-      - ./uploads:/uploads  # Access uploads if needed for preprocessing
-    networks:
-      - app_network
+    depends_on:
+      - mongodb
+    volumes:
+      - ./uploads:/uploads  # Access uploads if needed for preprocessing
+    networks:
+      - app_network
 
   mongodb:
     image: mongo
-    container_name: mongodb
-    ports:
-      - "27017:27017"  # Expose MongoDB on default port
-    volumes:
-      - mongo_data:/data/db  # Persist MongoDB data
-    networks:
-      - app_network
+    container_name: mongodb
+    ports:
+      - "27017:27017" # Expose MongoDB on default port
+    volumes:
+      - mongo_data:/data/db # Persist MongoDB data
+    networks:
+      - app_network
 
-  volumes:
-    mongo_data:  # Volume for MongoDB data
-    uploads:     # Volume for uploaded images
-  
-  networks:
-    app_network:
+volumes:
+  mongo_data: # Volume for MongoDB data
+  uploads:  # Volume for uploaded images
+
+networks:
+  app_network:
     driver: bridge
