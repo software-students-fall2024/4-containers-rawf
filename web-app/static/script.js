@@ -7,9 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     replayButton.addEventListener("click", (event) => {
         event.preventDefault();
-        // ADD RESET GAME LOGIC HERE
         console.log("Replay button clicked");
-        resetGame();
+        resetGame(); // ADD RESET GAME LOGIC HERE
     });
 });
 
@@ -37,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .getUserMedia({ video: true })
             .then((stream) => {
                 videoElement.srcObject = stream;
-                cameraBox.innerHTML = "";            // Placeholder
+                cameraBox.innerHTML = ""; // Placeholder
                 cameraBox.appendChild(videoElement);
                 cameraInitialized = true;
                 startGameCountdown();
@@ -64,12 +63,87 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (index === countdownTexts.length) {
                 clearInterval(interval);
-                generateRandomMove();
+                captureAndClassify(); // Replace generateRandomMove() with captureAndClassify()
             }
         }, 1000);
     }
 
-    // Generate random move and display results
+    // Capture a frame and classify using backend API
+    function captureAndClassify() {
+        const canvas = document.createElement("canvas");
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+        const frameData = canvas.toDataURL("image/png");
+
+        // Call backend /classify API
+        fetch("/classify", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({image_data: frameData}),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data && data.user_choice) {
+                    const userChoice = data.user_choice;
+                    generateComputerMove(userChoice); // Use classified result
+                } else {
+                    console.error("Invalid response from classify API:", data);
+                    generateComputerMove(); // Fallback to random move
+                }
+            })
+            .catch((err) => {
+                console.error("Error classifying hand gesture:", err);
+                generateComputerMove(); // Fallback to random move
+            });
+    }
+
+    // Generate computer move and display results
+    function generateComputerMove(userChoice = "Rock") {
+        const moves = ["Rock", "Paper", "Scissors"];
+        const computerChoice = moves[Math.floor(Math.random() * moves.length)];
+        const winner = determineWinner(userChoice, computerChoice);
+
+        // Display results
+        displayResults(userChoice, computerChoice, winner);
+
+        // Save game results to backend
+        saveGameResults(userChoice, computerChoice, winner);
+    }
+
+    // Save game results to backend
+    function saveGameResults(userChoice, computerChoice, winner) {
+        fetch("/save_game_result", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                user_choice: userChoice,
+                computer_choice: computerChoice,
+                winner: winner,
+                timestamp: new Date().toISOString(),
+            }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === "success") {
+                    console.log("Game result saved successfully:", data);
+                } else {
+                    console.error("Error saving game result:", data.message);
+                }
+            })
+            .catch((err) => {
+                console.error("Error saving game result:", err);
+            });
+    }
+
+    // COMMENTED OUT: Original generateRandomMove function
+    /*
     function generateRandomMove() {
         const moves = ["Rock", "Paper", "Scissors"];
         const userChoice = moves[Math.floor(Math.random() * moves.length)];
@@ -77,6 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const winner = determineWinner(userChoice, computerChoice);
         displayResults(userChoice, computerChoice, winner);
     }
+    */
 
     // Determine winner
     function determineWinner(userChoice, computerChoice) {

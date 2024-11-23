@@ -38,9 +38,10 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td id="user-wins">0</td>
-                        <td id="ties">0</td>
-                        <td id="computer-wins">0</td>
+                        <!-- 使用 Jinja2 模板语法动态填充统计数据 -->
+                        <td id="user-wins">{{ stats.user_wins }}</td>
+                        <td id="ties">{{ stats.ties }}</td>
+                        <td id="computer-wins">{{ stats.computer_wins }}</td>
                     </tr>
                 </tbody>
             </table>
