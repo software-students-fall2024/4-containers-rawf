@@ -3,45 +3,43 @@ This module contains test cases for the Flask application using pytest.
 """
 
 import pytest
-from app import app, simulate_computer_choice, determine_result 
-import numpy as np
+from app import app, simulate_computer_choice, determine_result
 
-# Rename the fixture to avoid conflict
+
 @pytest.fixture
-def test_client():
+def client_fixture():
     """
     Create a test client for the Flask application.
     """
     with app.test_client() as client:
         yield client
 
- 
 
-def test_home_route(test_client): # noqa
+def test_home_route(client_fixture):  # pylint: disable=redefined-outer-name
     """
     Test the home route to ensure it returns a status code of 200.
     """
-    response = test_client.get("/")
+    response = client_fixture.get("/")
     assert response.status_code == 200
 
 
-def test_tutorial_route(test_client): # noqa
+def test_tutorial_route(client_fixture):  # pylint: disable=redefined-outer-name
     """
     Test the tutorial route to ensure it returns a status code of 200.
     """
-    response = test_client.get("/tutorial")
+    response = client_fixture.get("/tutorial")
     assert response.status_code == 200
 
 
-def test_game_route(test_client):
+def test_game_route(client_fixture):  # pylint: disable=redefined-outer-name
     """
     Test the game route to ensure it returns a status code of 200.
     """
-    response = test_client.get("/game")
+    response = client_fixture.get("/game")
     assert response.status_code == 200
 
 
-def test_stats_route(test_client, mocker):
+def test_stats_route(client_fixture, mocker):  # pylint: disable=redefined-outer-name
     """
     Test the stats route to ensure it returns a status code of 200.
     Mock the MongoDB collection to simulate the stats.
@@ -49,25 +47,25 @@ def test_stats_route(test_client, mocker):
     # Mock the count_documents method for MongoDB
     mocker.patch("app.GAME_RESULTS_COLLECTION.count_documents", return_value=5)
 
-    response = test_client.get("/stats")
+    response = client_fixture.get("/stats")
     assert response.status_code == 200
     # Assert the expected content in the HTML response
     assert b"<html" in response.data
     assert b"user_wins" in response.data or b"wins" in response.data
 
 
-def test_data_route(test_client):
+def test_data_route(client_fixture):  # pylint: disable=redefined-outer-name
     """
     Test the JSON data API to ensure it returns a success status and includes a data key.
     """
-    response = test_client.get("/data")
+    response = client_fixture.get("/data")
     json_data = response.get_json()
     assert response.status_code == 200
     assert json_data["status"] == "success"
     assert "data" in json_data
 
 
-def test_test_db_route(test_client, mocker):
+def test_test_db_route(client_fixture, mocker):  # pylint: disable=redefined-outer-name
     """
     Test the MongoDB connection route to verify success or error status.
     Mock the database connection to test this functionality.
@@ -75,15 +73,17 @@ def test_test_db_route(test_client, mocker):
     # Mock the insert_one method for MongoDB
     mocker.patch("app.GAME_RESULTS_COLLECTION.insert_one", return_value=None)
     # Mock the list_database_names method
-    mocker.patch("app.client.list_database_names", return_value=["admin", "local", "test"])
+    mocker.patch(
+        "app.client.list_database_names", return_value=["admin", "local", "test"]
+    )
 
-    response = test_client.get("/test-db")
+    response = client_fixture.get("/test-db")
     json_data = response.get_json()
     assert response.status_code == 200
     assert json_data["status"] == "success"
 
 
-def test_save_game_result(test_client, mocker):
+def test_save_game_result(client_fixture, mocker):  # pylint: disable=redefined-outer-name
     """
     Test the save_game_result route to ensure it correctly saves a game result.
     """
@@ -95,27 +95,25 @@ def test_save_game_result(test_client, mocker):
         "computer_choice": "scissors",
         "winner": "User",
     }
-    response = test_client.post("/save_game_result", json=payload)
+    response = client_fixture.post("/save_game_result", json=payload)
     json_data = response.get_json()
     assert response.status_code == 200
     assert json_data["status"] == "success"
     assert json_data["message"] == "Game result saved"
 
 
-def test_classify(test_client, mocker):
+def test_classify(client_fixture, mocker):  # pylint: disable=redefined-outer-name
     """
     Test the classify route to ensure it returns classification results.
     Mock the machine learning client's API call and MongoDB insertion.
     """
     # Mock the machine learning client's response
-    mock_ml_response = {
-        "result": "rock"
-    }
-    mocker.patch("requests.post", return_value=mocker.Mock(
-        status_code=200,
-        json=lambda: mock_ml_response
-    ))
-    
+    mock_ml_response = {"result": "rock"}
+    mocker.patch(
+        "requests.post",
+        return_value=mocker.Mock(status_code=200, json=lambda: mock_ml_response),
+    )
+
     # Mock MongoDB insert_one
     mocker.patch("app.GAME_RESULTS_COLLECTION.insert_one", return_value=None)
 
@@ -123,7 +121,7 @@ def test_classify(test_client, mocker):
     payload = {"image_data": "valid_image_data_base64_string"}  # Example payload
 
     # Call the classify route
-    response = test_client.post("/classify", json=payload)
+    response = client_fixture.post("/classify", json=payload)
     json_data = response.get_json()
 
     # Assertions
@@ -158,4 +156,4 @@ def test_determine_result():
     assert determine_result("rock", "paper") == "Computer"
     assert determine_result("paper", "scissors") == "Computer"
     assert determine_result("scissors", "rock") == "Computer"
-
+    
