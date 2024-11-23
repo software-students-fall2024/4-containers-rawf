@@ -12,6 +12,10 @@ flask-cors = "*"
 pymongo = "*"
 python-dotenv = "*"
 requests = "*"
+pytest-mock = "*"
+numpy = "*"
+pytest-cov = "*"
+pytest-flask = "*"
 
 [dev-packages]
 pytest-flask = "*"  # Flask-specific pytest extension

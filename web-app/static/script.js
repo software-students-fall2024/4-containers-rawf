@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ image_data: frameData }),
+            body: JSON.stringify({image_data: frameData}),
         })
             .then((response) => response.json())
             .then((data) => {

@@ -13,7 +13,8 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from dotenv import load_dotenv
-#from pymongo.errors import PyMongoError
+
+# from pymongo.errors import PyMongoError
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,6 +26,9 @@ logger = logging.getLogger(__name__)
 # MongoDB Configuration
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongodb:27017/")
 MONGO_DBNAME = os.getenv("MONGO_DBNAME", "rawf_database")
+
+ML_CLIENT_URL = "http://ml-client:5001"  # Machine Learning Client's API endpoint
+
 
 try:
     client = MongoClient(MONGO_URI)
@@ -79,7 +83,9 @@ def stats():
         return render_template("stats.html", stats=stats_data)
     except ConnectionFailure as conn_error:
         logger.error("Error fetching stats data: %s", conn_error)
-        return render_template("stats.html", stats={"user_wins": 0, "ties": 0, "computer_wins": 0})
+        return render_template(
+            "stats.html", stats={"user_wins": 0, "ties": 0, "computer_wins": 0}
+        )
 
 
 @app.route("/data")
@@ -112,26 +118,31 @@ def save_game_result():
     """
     request_data = request.json  # 改名为更有意义的名字
     user_choice = request_data.get("user_choice")
-    computer_choice = data.get("computer_choice")
-    winner = data.get("winner")
+    computer_choice = request_data.get("computer_choice")
+    winner = request_data.get("winner")
 
     try:
-        GAME_RESULTS_COLLECTION.insert_one({
-            "user_choice": user_choice,
-            "computer_choice": computer_choice,
-            "winner": winner,
-            "timestamp": datetime.datetime.utcnow()
-        })
+        GAME_RESULTS_COLLECTION.insert_one(
+            {
+                "user_choice": user_choice,
+                "computer_choice": computer_choice,
+                "winner": winner,
+                "timestamp": datetime.datetime.utcnow(),
+            }
+        )
         logger.info(
             "Game result saved: User=%s, Computer=%s, Winner=%s",
             user_choice,
             computer_choice,
-            winner
+            winner,
         )
         return jsonify({"status": "success", "message": "Game result saved"})
     except ValueError as value_error:
         logger.error("Value error: %s", value_error)
-        return jsonify({"status": "error", "message": "Failed to save game result"}), 500
+        return (
+            jsonify({"status": "error", "message": "Failed to save game result"}),
+            500,
+        )
 
 
 @app.route("/classify", methods=["POST"])
@@ -140,22 +151,27 @@ def classify():
     Route to classify an image using the machine learning client.
     """
     try:
-        image = request.files["image"]
-        preprocess_response = requests.post(
-            f"{ML_CLIENT_URL}/preprocess", files={"image": image}, timeout=10
-        )
-        if preprocess_response.status_code != 200:
-            return jsonify({"status": "error", "message": "Preprocessing failed"}), 500
+        # Ensure an image is provided in the request
+        request_data = request.json
+        if "image_data" not in request_data:
+            logger.error("No image file provided in request")
+            return (
+                jsonify({"status": "error", "message": "No image data provided"}),
+                400,
+            )
 
-        image_array = preprocess_response.json().get("image_array")
-        if not image_array:
-            return jsonify({"status": "error", "message": "Invalid preprocessing response"}), 500
-
+        # Send the json payload to the ml_client for classification
         classify_response = requests.post(
-            f"{ML_CLIENT_URL}/classify",
-            json={"image_array": image_array},
+            f"{ML_CLIENT_URL}/classifyml",
+            json=request_data,
             timeout=10,
         )
+        logger.info(
+            "ML Client classify response: %s, %s",
+            classify_response.status_code,
+            classify_response.text,
+        )
+
         if classify_response.status_code != 200:
             return jsonify({"status": "error", "message": "Classification failed"}), 500
 
@@ -163,17 +179,24 @@ def classify():
         if "error" in classify_data:
             return jsonify({"status": "error", "message": classify_data["error"]}), 500
 
+        # Extract classification result
         user_choice = classify_data["result"]
+
+        # Simulate the computer's choice and determine the result
         computer_choice = simulate_computer_choice()
         result = determine_result(user_choice, computer_choice)
 
-        GAME_RESULTS_COLLECTION.insert_one({
-            "user_choice": user_choice,
-            "computer_choice": computer_choice,
-            "result": result,
-            "timestamp": datetime.datetime.utcnow(),
-        })
+        # Save the game result to the database
+        GAME_RESULTS_COLLECTION.insert_one(
+            {
+                "user_choice": user_choice,
+                "computer_choice": computer_choice,
+                "result": result,
+                "timestamp": datetime.datetime.utcnow(),
+            }
+        )
 
+        # Return the result to the client
         return jsonify(
             {
                 "user_choice": user_choice,
@@ -181,9 +204,10 @@ def classify():
                 "result": result,
             }
         )
-    except ValueError as value_error:
-        logger.error("Value error during classification: %s", value_error)
-        return jsonify({"status": "error", "message": str(value_error)}), 500
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Error during classification: %s", e)
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 def simulate_computer_choice():
     """
@@ -208,8 +232,6 @@ def determine_result(user_choice, computer_choice):
     }
     return "User" if win_conditions[user_choice] == computer_choice else "Computer"
 
-
-ML_CLIENT_URL = "http://ml-client:5001"  # Machine Learning Client's API endpoint
 
 if __name__ == "__main__":
     app.run(

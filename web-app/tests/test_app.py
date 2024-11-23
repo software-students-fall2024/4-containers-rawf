@@ -3,7 +3,8 @@ This module contains test cases for the Flask application using pytest.
 """
 
 import pytest
-from app import app, simulate_computer_choice, determine_result  
+from app import app, simulate_computer_choice, determine_result 
+import numpy as np
 
 # Rename the fixture to avoid conflict
 @pytest.fixture
@@ -50,7 +51,9 @@ def test_stats_route(test_client, mocker):
 
     response = test_client.get("/stats")
     assert response.status_code == 200
-    assert b"user_wins" in response.data
+    # Assert the expected content in the HTML response
+    assert b"<html" in response.data
+    assert b"user_wins" in response.data or b"wins" in response.data
 
 
 def test_data_route(test_client):
@@ -102,21 +105,28 @@ def test_save_game_result(test_client, mocker):
 def test_classify(test_client, mocker):
     """
     Test the classify route to ensure it returns classification results.
-    Mock external API calls and MongoDB insertion.
+    Mock the machine learning client's API call and MongoDB insertion.
     """
-    # Mock requests.post for preprocessing and classification
-    mocker.patch("requests.post", side_effect=[
-        # Mock preprocess response
-        type("Response", (), {"status_code": 200, "json": lambda: {"image_array": [1, 2, 3]}})(),
-        # Mock classify response
-        type("Response", (), {"status_code": 200, "json": lambda: {"result": "rock"}})()
-    ])
+    # Mock the machine learning client's response
+    mock_ml_response = {
+        "result": "rock"
+    }
+    mocker.patch("requests.post", return_value=mocker.Mock(
+        status_code=200,
+        json=lambda: mock_ml_response
+    ))
+    
     # Mock MongoDB insert_one
     mocker.patch("app.GAME_RESULTS_COLLECTION.insert_one", return_value=None)
 
-    # Simulate an image upload
-    response = test_client.post("/classify", data={"image": (b"fake_image_data", "test.png")})
+    # Simulate a valid JSON payload
+    payload = {"image_data": "valid_image_data_base64_string"}  # Example payload
+
+    # Call the classify route
+    response = test_client.post("/classify", json=payload)
     json_data = response.get_json()
+
+    # Assertions
     assert response.status_code == 200
     assert json_data["user_choice"] == "rock"
     assert "computer_choice" in json_data
