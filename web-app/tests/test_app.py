@@ -83,7 +83,9 @@ def test_test_db_route(client_fixture, mocker):  # pylint: disable=redefined-out
     assert json_data["status"] == "success"
 
 
-def test_save_game_result(client_fixture, mocker):  # pylint: disable=redefined-outer-name
+def test_save_game_result(
+    client_fixture, mocker
+):  # pylint: disable=redefined-outer-name
     """
     Test the save_game_result route to ensure it correctly saves a game result.
     """
@@ -156,4 +158,3 @@ def test_determine_result():
     assert determine_result("rock", "paper") == "Computer"
     assert determine_result("paper", "scissors") == "Computer"
     assert determine_result("scissors", "rock") == "Computer"
-    
